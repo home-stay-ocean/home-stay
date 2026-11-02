@@ -12,8 +12,22 @@ import {
 } from '../types';
 import { intervalsOverlap } from './dateUtils';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const env = import.meta.env;
+
+// Automatically support standard VITE_*, Vercel Supabase integration NEXT_PUBLIC_*, and SUPABASE_* variables
+const supabaseUrl: string =
+  env.VITE_SUPABASE_URL ||
+  (env as any).NEXT_PUBLIC_SUPABASE_URL ||
+  (env as any).SUPABASE_URL ||
+  '';
+
+const supabaseAnonKey: string =
+  env.VITE_SUPABASE_ANON_KEY ||
+  (env as any).NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  (env as any).NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  (env as any).SUPABASE_ANON_KEY ||
+  (env as any).SUPABASE_PUBLISHABLE_KEY ||
+  '';
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
