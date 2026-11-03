@@ -252,11 +252,17 @@ export const api = {
     if (error) throw error;
 
     let result = (data || []).map((b: any) => {
-      const totalPaid = (b.payments || []).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+      const room = Array.isArray(b.room) ? b.room[0] : b.room;
+      const guest = Array.isArray(b.guest) ? b.guest[0] : b.guest;
+      const payments = Array.isArray(b.payments) ? b.payments : [];
+      const totalPaid = payments.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
       return {
         ...b,
+        room,
+        guest,
+        payments,
         total_paid: totalPaid,
-        balance_due: Math.max(0, Number(b.total_amount) - totalPaid),
+        balance_due: Math.max(0, Number(b.total_amount || 0) - totalPaid),
       };
     });
 
@@ -542,11 +548,16 @@ export const api = {
 
   async adminToggleUserStatus(userId: string, active: boolean): Promise<void> {
     const client = getClient();
-    const { data, error } = await client.functions.invoke('admin-create-user', {
-      body: { action: 'toggle_active', user_id: userId, active },
-    });
-    if (error) throw new Error(error.message);
-    if (data?.error) throw new Error(data.error);
+    try {
+      const { data, error } = await client.functions.invoke('admin-create-user', {
+        body: { action: 'toggle_active', user_id: userId, active },
+      });
+      if (!error && !data?.error) return;
+    } catch (e) {
+      // Edge function not deployed, fallback to direct Supabase RLS update
+    }
+    const { error } = await client.from('profiles').update({ active }).eq('id', userId);
+    if (error) throw error;
   },
 
   async adminResetPassword(userId: string, newPassword: string): Promise<void> {
@@ -560,11 +571,24 @@ export const api = {
 
   async adminUpdateRole(userId: string, role: UserRole, assigned_homestays?: string[]): Promise<void> {
     const client = getClient();
-    const { data, error } = await client.functions.invoke('admin-create-user', {
-      body: { action: 'update_role', user_id: userId, role, assigned_homestays },
-    });
-    if (error) throw new Error(error.message);
-    if (data?.error) throw new Error(data.error);
+    try {
+      const { data, error } = await client.functions.invoke('admin-create-user', {
+        body: { action: 'update_role', user_id: userId, role, assigned_homestays },
+      });
+      if (!error && !data?.error) return;
+    } catch (e) {
+      // Edge function not deployed, fallback to direct Supabase RLS update
+    }
+    const { error } = await client.from('profiles').update({ role }).eq('id', userId);
+    if (error) throw error;
+
+    if (assigned_homestays !== undefined) {
+      await client.from('manager_homestays').delete().eq('user_id', userId);
+      if (assigned_homestays.length > 0) {
+        const rows = assigned_homestays.map((hId) => ({ user_id: userId, homestay_id: hId }));
+        await client.from('manager_homestays').insert(rows);
+      }
+    }
   },
 
   // ----------------------------------------------------------------------------

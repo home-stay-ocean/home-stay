@@ -3,7 +3,7 @@ import { Booking, Expense, Payment, Room, Homestay } from '../types';
 import { api } from '../lib/supabase';
 import { useHomestay } from '../contexts/HomestayContext';
 import { formatCurrency } from '../lib/constants';
-import { calculateNights, TimeframePreset, getTimeframeDates, isDateInDateRange, formatDisplayDate } from '../lib/dateUtils';
+import { calculateNights, TimeframePreset, getTimeframeDates, isDateInDateRange, isBookingInDateRange, formatDisplayDate } from '../lib/dateUtils';
 import {
   BarChart,
   Bar,
@@ -108,9 +108,8 @@ export const AnalyticsPage: React.FC = () => {
         return false;
       }
       // 2. Date match
-      if (timeframe.startDate && timeframe.endDate) {
-        const inPeriod = b.check_in <= timeframe.endDate && b.check_out >= timeframe.startDate;
-        if (!inPeriod) return false;
+      if (!isBookingInDateRange(b.check_in, b.check_out, timeframe.startDate, timeframe.endDate)) {
+        return false;
       }
       return true;
     });

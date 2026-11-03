@@ -69,12 +69,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
   // 1. Today's Check-Ins: bookings starting today (check_in === todayStr) and not cancelled
   const todayCheckIns = bookings.filter(
-    (b) => b.check_in === todayStr && b.status !== 'cancelled'
+    (b) => (b.check_in?.split('T')[0] || b.check_in) === todayStr && b.status !== 'cancelled'
   );
 
   // 2. Today's Check-Outs: bookings ending today (check_out === todayStr) and not cancelled
   const todayCheckOuts = bookings.filter(
-    (b) => b.check_out === todayStr && b.status !== 'cancelled'
+    (b) => (b.check_out?.split('T')[0] || b.check_out) === todayStr && b.status !== 'cancelled'
   );
 
   // 3. Rooms Occupied Now: status === 'checked_in'
@@ -93,7 +93,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
     // Sum payments paid in this month
     b.payments?.forEach((p) => {
-      if (p.paid_on.startsWith(currentMonthPrefix)) {
+      const pDate = p.paid_on?.split('T')[0] || p.paid_on || '';
+      if (pDate.startsWith(currentMonthPrefix)) {
         thisMonthIncome += Number(p.amount);
       }
     });

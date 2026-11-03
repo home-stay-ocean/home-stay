@@ -41,9 +41,15 @@ export const BasicStatsPage: React.FC = () => {
   const totalRooms = scopedRooms.length || 1;
 
   const activeCheckedIn = bookings.filter((b) => b.status === 'checked_in');
-  const todayArrivals = bookings.filter((b) => b.check_in === todayStr && b.status !== 'cancelled');
-  const todayDepartures = bookings.filter((b) => b.check_out === todayStr && b.status !== 'cancelled');
-  const upcomingBookings = bookings.filter((b) => b.status === 'booked' && b.check_in >= todayStr);
+  const todayArrivals = bookings.filter(
+    (b) => (b.check_in?.split('T')[0] || b.check_in) === todayStr && b.status !== 'cancelled'
+  );
+  const todayDepartures = bookings.filter(
+    (b) => (b.check_out?.split('T')[0] || b.check_out) === todayStr && b.status !== 'cancelled'
+  );
+  const upcomingBookings = bookings.filter(
+    (b) => b.status === 'booked' && (b.check_in?.split('T')[0] || b.check_in) >= todayStr
+  );
 
   const occupancyRate = Math.min(100, Math.round((activeCheckedIn.length / totalRooms) * 100));
   const totalGuestsHosted = bookings

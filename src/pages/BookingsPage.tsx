@@ -12,6 +12,7 @@ import {
   calculateNights,
   TimeframePreset,
   getTimeframeDates,
+  isBookingInDateRange,
 } from '../lib/dateUtils';
 import { exportBookingsToCSV } from '../lib/csvExport';
 import {
@@ -47,7 +48,7 @@ export const BookingsPage: React.FC<BookingsPageProps> = ({
   onSelectBooking,
 }) => {
   const { role } = useAuth();
-  const { homestays, activeHomestayId } = useHomestay();
+  const { homestays, rooms, activeHomestayId, setActiveHomestayId } = useHomestay();
   const { showToast, showError } = useToast();
 
   const isOwnerOrAdmin = role === 'super_admin' || role === 'owner';
@@ -79,12 +80,7 @@ export const BookingsPage: React.FC<BookingsPageProps> = ({
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      const data = await api.getBookings({
-        homestay_id: homestayFilter,
-        status: statusFilter,
-        unpaid_only: unpaidOnly,
-        search: searchTerm,
-      });
+      const data = await api.getBookings();
       setBookings(data);
     } catch (err) {
       console.error('Failed to load bookings:', err);
@@ -95,17 +91,68 @@ export const BookingsPage: React.FC<BookingsPageProps> = ({
 
   useEffect(() => {
     fetchBookings();
-  }, [homestayFilter, statusFilter, unpaidOnly, searchTerm]);
+  }, []);
+
+  const hasActiveFilters =
+    searchTerm.trim() !== '' ||
+    statusFilter !== 'all' ||
+    homestayFilter !== 'all' ||
+    unpaidOnly ||
+    selectedTimeframe !== 'all';
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setHomestayFilter('all');
+    setActiveHomestayId('all');
+    setUnpaidOnly(false);
+    setSelectedTimeframe('all');
+    setCustomStartDate('');
+    setCustomEndDate('');
+  };
 
   const filteredBookings = useMemo(() => {
     return bookings.filter((b) => {
-      if (timeframe.startDate && timeframe.endDate) {
-        const inPeriod = b.check_in <= timeframe.endDate && b.check_out >= timeframe.startDate;
-        if (!inPeriod) return false;
+      // 1. Homestay / Property filter
+      if (homestayFilter && homestayFilter !== 'all') {
+        const hId = b.room?.homestay_id || rooms.find((r) => r.id === b.room_id)?.homestay_id;
+        if (hId !== homestayFilter) return false;
       }
+
+      // 2. Status filter
+      if (statusFilter && statusFilter !== 'all') {
+        if (b.status !== statusFilter) return false;
+      }
+
+      // 3. Unpaid only filter
+      if (unpaidOnly) {
+        const totalPaid = b.payments?.reduce((acc, p) => acc + Number(p.amount || 0), 0) || b.total_paid || 0;
+        const balanceDue = Math.max(0, Number(b.total_amount || 0) - totalPaid);
+        if (balanceDue <= 0 || b.status === 'cancelled') return false;
+      }
+
+      // 4. Search term (instant matching across name, phone, room, notes, ID)
+      if (searchTerm.trim()) {
+        const s = searchTerm.toLowerCase().trim();
+        const matches =
+          Boolean(b.guest?.name?.toLowerCase().includes(s)) ||
+          Boolean(b.guest?.phone?.toLowerCase().includes(s)) ||
+          Boolean(b.guest?.id_proof_note?.toLowerCase().includes(s)) ||
+          Boolean(b.room?.name?.toLowerCase().includes(s)) ||
+          Boolean(b.room?.homestay?.name?.toLowerCase().includes(s)) ||
+          Boolean(b.notes?.toLowerCase().includes(s)) ||
+          Boolean(b.id?.toLowerCase().includes(s));
+        if (!matches) return false;
+      }
+
+      // 5. Timeframe / Date range filter
+      if (!isBookingInDateRange(b.check_in, b.check_out, timeframe.startDate, timeframe.endDate)) {
+        return false;
+      }
+
       return true;
     });
-  }, [bookings, timeframe]);
+  }, [bookings, homestayFilter, statusFilter, unpaidOnly, searchTerm, timeframe, rooms]);
 
   const handleExportCSV = () => {
     if (filteredBookings.length === 0) {
@@ -202,7 +249,10 @@ export const BookingsPage: React.FC<BookingsPageProps> = ({
           <div>
             <select
               value={homestayFilter}
-              onChange={(e) => setHomestayFilter(e.target.value)}
+              onChange={(e) => {
+                setHomestayFilter(e.target.value);
+                setActiveHomestayId(e.target.value);
+              }}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
             >
               <option value="all">All Homestays</option>
@@ -254,19 +304,18 @@ export const BookingsPage: React.FC<BookingsPageProps> = ({
               <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200">
                 {timeframe.label}
               </span>
+              <span className="text-xs text-slate-400 font-medium">
+                ({filteredBookings.length} {filteredBookings.length === 1 ? 'booking' : 'bookings'})
+              </span>
             </div>
 
-            {selectedTimeframe !== 'all' && (
+            {hasActiveFilters && (
               <button
-                onClick={() => {
-                  setSelectedTimeframe('all');
-                  setCustomStartDate('');
-                  setCustomEndDate('');
-                }}
-                className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 hover:underline self-start sm:self-auto"
+                onClick={handleResetFilters}
+                className="text-xs font-bold text-rose-600 hover:text-rose-800 flex items-center gap-1 hover:underline self-start sm:self-auto bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-200 transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />
-                <span>Reset to All Time</span>
+                <span>Reset All Filters</span>
               </button>
             )}
           </div>

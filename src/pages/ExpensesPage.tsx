@@ -4,6 +4,7 @@ import { api } from '../lib/supabase';
 import { useHomestay } from '../contexts/HomestayContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/common/Toast';
+import { Modal } from '../components/common/Modal';
 import { formatCurrency, EXPENSE_CATEGORIES } from '../lib/constants';
 import {
   formatDisplayDate,
@@ -32,11 +33,15 @@ interface ExpensesPageProps {
 
 export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onOpenNewExpense }) => {
   const { role } = useAuth();
-  const { homestays, activeHomestayId } = useHomestay();
+  const { homestays, activeHomestayId, setActiveHomestayId } = useHomestay();
   const { showToast, showError } = useToast();
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // In-app Delete Confirmation State
+  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Filters
   const [homestayFilter, setHomestayFilter] = useState(activeHomestayId);
@@ -59,10 +64,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onOpenNewExpense }) 
   const fetchExpenses = async () => {
     try {
       setLoading(true);
-      const data = await api.getExpenses({
-        homestay_id: homestayFilter,
-        category: categoryFilter,
-      });
+      const data = await api.getExpenses();
       setExpenses(data);
     } catch (err) {
       console.error('Failed to load expenses:', err);
@@ -73,36 +75,70 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onOpenNewExpense }) 
 
   useEffect(() => {
     fetchExpenses();
-  }, [homestayFilter, categoryFilter]);
+  }, []);
 
-  const filteredExpenses = expenses.filter((e) => {
-    if (searchTerm.trim()) {
-      const s = searchTerm.toLowerCase();
-      const match =
-        Boolean(e.note?.toLowerCase().includes(s)) ||
-        Boolean(e.homestay?.name?.toLowerCase().includes(s)) ||
-        Boolean(e.category?.toLowerCase().includes(s)) ||
-        Boolean(e.creator?.full_name?.toLowerCase().includes(s));
-      if (!match) return false;
-    }
+  const hasActiveFilters =
+    searchTerm.trim() !== '' ||
+    homestayFilter !== 'all' ||
+    categoryFilter !== 'all' ||
+    selectedTimeframe !== 'all';
 
-    if (!isDateInDateRange(e.spent_on, timeframe.startDate, timeframe.endDate)) {
-      return false;
-    }
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setCategoryFilter('all');
+    setHomestayFilter('all');
+    setActiveHomestayId('all');
+    setSelectedTimeframe('all');
+    setCustomStartDate('');
+    setCustomEndDate('');
+  };
 
-    return true;
-  });
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter((e) => {
+      // 1. Homestay
+      if (homestayFilter && homestayFilter !== 'all') {
+        if (e.homestay_id !== homestayFilter) return false;
+      }
 
-  const totalExpenseAmount = filteredExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+      // 2. Category
+      if (categoryFilter && categoryFilter !== 'all') {
+        if (e.category !== categoryFilter) return false;
+      }
 
-  const handleDeleteExpense = async (id: string) => {
-    if (!window.confirm('Delete this expense entry?')) return;
+      // 3. Search
+      if (searchTerm.trim()) {
+        const s = searchTerm.toLowerCase().trim();
+        const match =
+          Boolean(e.note?.toLowerCase().includes(s)) ||
+          Boolean(e.homestay?.name?.toLowerCase().includes(s)) ||
+          Boolean(e.category?.toLowerCase().includes(s)) ||
+          Boolean(e.creator?.full_name?.toLowerCase().includes(s));
+        if (!match) return false;
+      }
+
+      // 4. Timeframe
+      if (!isDateInDateRange(e.spent_on, timeframe.startDate, timeframe.endDate)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [expenses, homestayFilter, categoryFilter, searchTerm, timeframe]);
+
+  const totalExpenseAmount = filteredExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+  const handleConfirmDelete = async () => {
+    if (!expenseToDelete) return;
     try {
-      await api.deleteExpense(id);
+      setIsDeleting(true);
+      await api.deleteExpense(expenseToDelete.id);
       showToast('Expense Removed', 'Expense record deleted.');
+      setExpenseToDelete(null);
       fetchExpenses();
     } catch (err) {
       showError(err, 'Could not delete expense');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -169,7 +205,10 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onOpenNewExpense }) 
           <div>
             <select
               value={homestayFilter}
-              onChange={(e) => setHomestayFilter(e.target.value)}
+              onChange={(e) => {
+                setHomestayFilter(e.target.value);
+                setActiveHomestayId(e.target.value);
+              }}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
             >
               <option value="all">All Homestays</option>
@@ -209,19 +248,18 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onOpenNewExpense }) 
               <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200">
                 {timeframe.label}
               </span>
+              <span className="text-xs text-slate-400 font-medium">
+                ({filteredExpenses.length} {filteredExpenses.length === 1 ? 'entry' : 'entries'})
+              </span>
             </div>
 
-            {selectedTimeframe !== 'all' && (
+            {hasActiveFilters && (
               <button
-                onClick={() => {
-                  setSelectedTimeframe('all');
-                  setCustomStartDate('');
-                  setCustomEndDate('');
-                }}
-                className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 hover:underline self-start sm:self-auto"
+                onClick={handleResetFilters}
+                className="text-xs font-bold text-rose-600 hover:text-rose-800 flex items-center gap-1 hover:underline self-start sm:self-auto bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-200 transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />
-                <span>Reset to All Time</span>
+                <span>Reset All Filters</span>
               </button>
             )}
           </div>
@@ -343,7 +381,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onOpenNewExpense }) 
                         {isOwnerOrAdmin && (
                           <td className="px-4 py-3.5 text-right">
                             <button
-                              onClick={() => handleDeleteExpense(e.id)}
+                              onClick={() => setExpenseToDelete(e)}
                               className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                               title="Delete Expense"
                             >
@@ -385,7 +423,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onOpenNewExpense }) 
                     {isOwnerOrAdmin && (
                       <div className="flex justify-end pt-1">
                         <button
-                          onClick={() => handleDeleteExpense(e.id)}
+                          onClick={() => setExpenseToDelete(e)}
                           className="text-xs text-rose-600 font-semibold hover:underline"
                         >
                           Delete
@@ -399,6 +437,43 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onOpenNewExpense }) 
           </>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={Boolean(expenseToDelete)}
+        onClose={() => setExpenseToDelete(null)}
+        title="Delete Expense Record"
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Are you sure you want to delete this expense of{' '}
+            <strong className="text-slate-900">
+              {expenseToDelete ? formatCurrency(expenseToDelete.amount) : ''}
+            </strong>{' '}
+            for{' '}
+            <strong className="text-slate-900">
+              {expenseToDelete?.homestay?.name || 'this property'}
+            </strong>
+            ? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={() => setExpenseToDelete(null)}
+              className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors disabled:opacity-50"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Expense'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

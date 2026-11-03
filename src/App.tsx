@@ -14,7 +14,6 @@ import { ExpensesPage } from './pages/ExpensesPage';
 import { SetupPage } from './pages/SetupPage';
 import { UsersPage } from './pages/UsersPage';
 import { ActivityLogPage } from './pages/ActivityLogPage';
-import { SetupGuideModal } from './pages/SetupGuideModal';
 
 // Modals
 import { BookingModal } from './components/bookings/BookingModal';
@@ -29,8 +28,6 @@ function MainApp() {
   const [currentScreen, setCurrentScreen] = useState<ActiveScreen>('dashboard');
 
   // Modal States
-  const [isSetupGuideOpen, setIsSetupGuideOpen] = useState(false);
-
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [bookingToEdit, setBookingToEdit] = useState<Booking | null>(null);
   const [bookingInitialRoomId, setBookingInitialRoomId] = useState<string | undefined>();
@@ -89,15 +86,7 @@ function MainApp() {
 
   // If no user session, show Login Page
   if (!user) {
-    return (
-      <>
-        <LoginPage onOpenSetupGuide={() => setIsSetupGuideOpen(true)} />
-        <SetupGuideModal
-          isOpen={isSetupGuideOpen}
-          onClose={() => setIsSetupGuideOpen(false)}
-        />
-      </>
-    );
+    return <LoginPage />;
   }
 
   const isSuperAdmin = role === 'super_admin';
@@ -107,7 +96,6 @@ function MainApp() {
     <AppLayout
       currentScreen={currentScreen}
       onSelectScreen={setCurrentScreen}
-      onOpenSetupGuide={() => setIsSetupGuideOpen(true)}
     >
       {/* Screen Router */}
       <div key={refreshKey}>
@@ -199,11 +187,6 @@ function MainApp() {
         isOpen={isExpenseModalOpen}
         onClose={() => setIsExpenseModalOpen(false)}
         onExpenseAdded={triggerRefresh}
-      />
-
-      <SetupGuideModal
-        isOpen={isSetupGuideOpen}
-        onClose={() => setIsSetupGuideOpen(false)}
       />
     </AppLayout>
   );

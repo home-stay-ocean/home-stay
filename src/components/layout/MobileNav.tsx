@@ -21,13 +21,11 @@ import { RoleBadge } from '../common/Badge';
 interface MobileNavProps {
   currentScreen: ActiveScreen;
   onSelectScreen: (screen: ActiveScreen) => void;
-  onOpenSetupGuide: () => void;
 }
 
 export const MobileNav: React.FC<MobileNavProps> = ({
   currentScreen,
   onSelectScreen,
-  onOpenSetupGuide,
 }) => {
   const { role, profile, signOut } = useAuth();
   const [showMoreDrawer, setShowMoreDrawer] = useState(false);
@@ -204,16 +202,6 @@ export const MobileNav: React.FC<MobileNavProps> = ({
 
             {/* Quick Actions & Logout */}
             <div className="pt-3 border-t border-slate-100 space-y-2">
-              <button
-                onClick={() => {
-                  setShowMoreDrawer(false);
-                  onOpenSetupGuide();
-                }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-sm font-medium transition-colors"
-              >
-                <HelpCircle className="w-5 h-5 text-brand-600" />
-                <span>Supabase Setup Guide & Docs</span>
-              </button>
 
               <button
                 onClick={() => {

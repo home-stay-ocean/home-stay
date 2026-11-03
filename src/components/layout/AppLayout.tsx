@@ -7,14 +7,12 @@ import { MobileNav } from './MobileNav';
 interface AppLayoutProps {
   currentScreen: ActiveScreen;
   onSelectScreen: (screen: ActiveScreen) => void;
-  onOpenSetupGuide: () => void;
   children: React.ReactNode;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
   currentScreen,
   onSelectScreen,
-  onOpenSetupGuide,
   children,
 }) => {
   return (
@@ -24,7 +22,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <Header onOpenSetupGuide={onOpenSetupGuide} />
+        <Header />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-24 md:pb-10">
           {children}
@@ -34,7 +32,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         <MobileNav
           currentScreen={currentScreen}
           onSelectScreen={onSelectScreen}
-          onOpenSetupGuide={onOpenSetupGuide}
         />
       </div>
     </div>

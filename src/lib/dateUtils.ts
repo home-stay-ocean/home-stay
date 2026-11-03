@@ -144,15 +144,19 @@ export function getTimeframeDates(
       return { startDate: `${year}-01-01`, endDate: `${year}-12-31`, label: 'This Year' };
     }
 
-    case 'custom':
-      return {
-        startDate: customStart || todayStr,
-        endDate: customEnd || todayStr,
-        label:
-          customStart && customEnd
-            ? `${formatDisplayDate(customStart)} → ${formatDisplayDate(customEnd)}`
-            : 'Custom Range',
-      };
+    case 'custom': {
+      const start = customStart && customStart.trim() ? customStart.trim() : undefined;
+      const end = customEnd && customEnd.trim() ? customEnd.trim() : undefined;
+      let label = 'Custom Range';
+      if (start && end) {
+        label = `${formatDisplayDate(start)} → ${formatDisplayDate(end)}`;
+      } else if (start) {
+        label = `From ${formatDisplayDate(start)}`;
+      } else if (end) {
+        label = `Until ${formatDisplayDate(end)}`;
+      }
+      return { startDate: start, endDate: end, label };
+    }
 
     case 'all':
     default:
@@ -172,5 +176,30 @@ export function isDateInDateRange(
   const d = dateStr.split('T')[0];
   if (startDate && d < startDate) return false;
   if (endDate && d > endDate) return false;
+  return true;
+}
+
+/**
+ * Checks if a booking's stay [check_in, check_out] overlaps a timeframe [startDate, endDate]
+ */
+export function isBookingInDateRange(
+  checkInStr: string | null | undefined,
+  checkOutStr: string | null | undefined,
+  startDate?: string,
+  endDate?: string
+): boolean {
+  if (!checkInStr || !checkOutStr) return false;
+  const inDate = checkInStr.split('T')[0];
+  const outDate = checkOutStr.split('T')[0];
+
+  if (startDate && endDate) {
+    return inDate <= endDate && outDate >= startDate;
+  }
+  if (startDate) {
+    return outDate >= startDate;
+  }
+  if (endDate) {
+    return inDate <= endDate;
+  }
   return true;
 }

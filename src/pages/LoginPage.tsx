@@ -3,11 +3,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/common/Toast';
 import { Home, Lock, Mail, ArrowRight, HelpCircle, AlertTriangle } from 'lucide-react';
 
-interface LoginPageProps {
-  onOpenSetupGuide: () => void;
-}
+interface LoginPageProps {}
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onOpenSetupGuide }) => {
+export const LoginPage: React.FC<LoginPageProps> = () => {
   const { signIn, resetPassword, isConfigured } = useAuth();
   const { showToast, showError } = useToast();
 
@@ -76,13 +74,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onOpenSetupGuide }) => {
               <p className="text-slate-600">
                 Please add your <code className="bg-amber-100/80 px-1 rounded font-mono">VITE_SUPABASE_URL</code> and <code className="bg-amber-100/80 px-1 rounded font-mono">VITE_SUPABASE_ANON_KEY</code> into the <code className="bg-amber-100/80 px-1 rounded font-mono">.env</code> file.
               </p>
-              <button
-                type="button"
-                onClick={onOpenSetupGuide}
-                className="text-xs font-bold text-amber-800 underline hover:text-amber-950 inline-flex items-center gap-1 pt-1"
-              >
-                <span>View Database Setup Guide & SQL Schema</span>
-              </button>
             </div>
           </div>
         )}
@@ -187,17 +178,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onOpenSetupGuide }) => {
               </div>
             </form>
           )}
-
-          {/* Setup Guide Link */}
-          <div className="mt-6 pt-5 border-t border-slate-100 text-center">
-            <button
-              onClick={onOpenSetupGuide}
-              className="text-xs font-semibold text-slate-500 hover:text-brand-600 inline-flex items-center gap-1 transition-colors"
-            >
-              <HelpCircle className="w-3.5 h-3.5 text-brand-600" />
-              <span>Database Setup Guide & SQL Schema</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>

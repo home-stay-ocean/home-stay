@@ -14,11 +14,9 @@ import {
   UserCheck,
 } from 'lucide-react';
 
-interface HeaderProps {
-  onOpenSetupGuide: () => void;
-}
+interface HeaderProps {}
 
-export const Header: React.FC<HeaderProps> = ({ onOpenSetupGuide }) => {
+export const Header: React.FC<HeaderProps> = () => {
   const { user, profile, role, signOut } = useAuth();
   const { homestays, activeHomestayId, setActiveHomestayId } = useHomestay();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -60,19 +58,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSetupGuide }) => {
           </span>
         </div>
 
-        {/* Right: Setup Guide + User Profile */}
+        {/* Right: User Profile */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Setup Guide Button */}
-          <button
-            onClick={onOpenSetupGuide}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-brand-700 bg-slate-100 hover:bg-brand-50 border border-slate-200 rounded-lg transition-colors"
-            title="Supabase & App Setup Guide"
-          >
-            <HelpCircle className="w-4 h-4 text-brand-600" />
-            <span className="hidden sm:inline">Setup Guide</span>
-          </button>
-
-
           {/* User Profile dropdown */}
           <div className="relative">
             <button
@@ -110,18 +97,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSetupGuide }) => {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => {
-                    setShowUserMenu(false);
-                    onOpenSetupGuide();
-                  }}
-                  className="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                >
-                  <HelpCircle className="w-4 h-4 text-slate-400" />
-                  <span>Setup & Documentation</span>
-                </button>
-
-                <div className="border-t border-slate-100 my-1" />
+                <div className="my-1" />
 
                 <button
                   onClick={() => {
