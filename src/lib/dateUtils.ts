@@ -1,4 +1,32 @@
-import { format, parseISO, differenceInCalendarDays, addDays, isWithinInterval, startOfDay, isBefore, isAfter } from 'date-fns';
+import { format, parseISO, differenceInCalendarDays, addDays, startOfDay } from 'date-fns';
+
+/**
+ * Normalises phone numbers using Indian standards (+91XXXXXXXXXX) and global E.164
+ */
+export function normalizePhoneNumber(phone: string | null | undefined): string {
+  if (!phone) return '';
+  const trimmed = phone.trim();
+  const cleaned = trimmed.replace(/[^0-9+]/g, '');
+  if (!cleaned) return '';
+
+  // Case 1: Indian 10 digits directly -> +91XXXXXXXXXX
+  if (/^[0-9]{10}$/.test(cleaned)) {
+    return `+91${cleaned}`;
+  }
+  // Case 2: Indian 10 digits with leading 0 -> +91XXXXXXXXXX
+  if (/^0[0-9]{10}$/.test(cleaned)) {
+    return `+91${cleaned.substring(1)}`;
+  }
+  // Case 3: Indian 10 digits with 91 prefix without plus -> +91XXXXXXXXXX
+  if (/^91[0-9]{10}$/.test(cleaned)) {
+    return `+${cleaned}`;
+  }
+  // Case 4: Already +91 or other +country code
+  if (/^\+[0-9]+$/.test(cleaned)) {
+    return cleaned;
+  }
+  return cleaned;
+}
 
 /**
  * Formats a Date object or ISO string to YYYY-MM-DD
@@ -11,13 +39,41 @@ export function toISODate(date: Date | string): string {
 }
 
 /**
- * Human friendly date: e.g. "Sat, 31 Oct" or "31 Oct 2026"
+ * Formats date strictly in DD-MM-YYYY format (e.g. "04-11-2026")
  */
-export function formatDisplayDate(dateStr: string | null | undefined, includeYear: boolean = false): string {
+export function formatDisplayDate(dateStr: string | null | undefined, includeYear: boolean = true): string {
+  if (!dateStr) return '-';
+  try {
+    const raw = dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`;
+    const d = typeof raw === 'string' ? parseISO(raw) : raw;
+    return format(d, includeYear ? 'dd-MM-yyyy' : 'dd-MM');
+  } catch {
+    return dateStr;
+  }
+}
+
+/**
+ * Formats time in 12-hour format with AM/PM (e.g. "12:00 PM IST")
+ */
+export function formatDisplayTime(dateStr: string | null | undefined, includeTz: boolean = false): string {
   if (!dateStr) return '-';
   try {
     const d = typeof dateStr === 'string' ? parseISO(dateStr) : dateStr;
-    return format(d, includeYear ? 'dd MMM yyyy' : 'EEE, dd MMM');
+    const timeFormatted = format(d, 'hh:mm a');
+    return includeTz ? `${timeFormatted} IST` : timeFormatted;
+  } catch {
+    return dateStr;
+  }
+}
+
+/**
+ * Formats combined date and time: e.g. "04-11-2026, 12:00 PM"
+ */
+export function formatDisplayDateTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return '-';
+  try {
+    const d = typeof dateStr === 'string' ? parseISO(dateStr) : dateStr;
+    return format(d, 'dd-MM-yyyy, hh:mm a');
   } catch {
     return dateStr;
   }
@@ -30,8 +86,8 @@ export function formatDisplayDate(dateStr: string | null | undefined, includeYea
  */
 export function calculateNights(checkIn: string, checkOut: string): number {
   if (!checkIn || !checkOut) return 0;
-  const start = parseISO(checkIn);
-  const end = parseISO(checkOut);
+  const start = parseISO(checkIn.split('T')[0]);
+  const end = parseISO(checkOut.split('T')[0]);
   const diff = differenceInCalendarDays(end, start);
   return Math.max(0, diff);
 }
@@ -47,8 +103,11 @@ export function intervalsOverlap(
   bIn: string,
   bOut: string
 ): boolean {
-  // A overlaps B iff aIn < bOut AND bIn < aOut
-  return aIn < bOut && bIn < aOut;
+  const cleanAIn = aIn.split('T')[0];
+  const cleanAOut = aOut.split('T')[0];
+  const cleanBIn = bIn.split('T')[0];
+  const cleanBOut = bOut.split('T')[0];
+  return cleanAIn < cleanBOut && cleanBIn < cleanAOut;
 }
 
 /**
@@ -69,8 +128,9 @@ export function generateDaysArray(startDate: Date, count: number = 30): Date[] {
  */
 export function isDayOccupiedByBooking(day: Date, checkInStr: string, checkOutStr: string): boolean {
   const dayStr = toISODate(day);
-  // Occupied if dayStr >= check_in and dayStr < check_out
-  return dayStr >= checkInStr && dayStr < checkOutStr;
+  const inDate = checkInStr.split('T')[0];
+  const outDate = checkOutStr.split('T')[0];
+  return dayStr >= inDate && dayStr < outDate;
 }
 
 /**
@@ -91,6 +151,7 @@ export type TimeframePreset =
   | 'all'
   | 'today'
   | 'yesterday'
+  | 'this_week'
   | 'this_month'
   | 'last_month'
   | 'last_30_days'
@@ -113,6 +174,14 @@ export function getTimeframeDates(
       const yest = addDays(now, -1);
       const yestStr = toISODate(yest);
       return { startDate: yestStr, endDate: yestStr, label: 'Yesterday' };
+    }
+
+    case 'this_week': {
+      const day = now.getDay(); // 0 is Sunday
+      const diffToMonday = (day === 0 ? -6 : 1) - day;
+      const monday = addDays(now, diffToMonday);
+      const sunday = addDays(monday, 6);
+      return { startDate: toISODate(monday), endDate: toISODate(sunday), label: 'This Week' };
     }
 
     case 'this_month': {

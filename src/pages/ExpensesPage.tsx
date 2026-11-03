@@ -14,6 +14,7 @@ import {
   calculateNights,
 } from '../lib/dateUtils';
 import { exportExpensesToCSV } from '../lib/csvExport';
+import { Pagination } from '../components/common/Pagination';
 import {
   Receipt,
   PlusCircle,
@@ -38,6 +39,10 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onOpenNewExpense }) 
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
   // In-app Delete Confirmation State
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
@@ -126,6 +131,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onOpenNewExpense }) 
   }, [expenses, homestayFilter, categoryFilter, searchTerm, timeframe]);
 
   const totalExpenseAmount = filteredExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  const pagedExpenses = filteredExpenses.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleConfirmDelete = async () => {
     if (!expenseToDelete) return;
@@ -354,7 +360,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onOpenNewExpense }) 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredExpenses.map((e) => {
+                  {pagedExpenses.map((e) => {
                     const cat = getCategoryConfig(e.category);
                     return (
                       <tr key={e.id} className="hover:bg-slate-50/80 transition-colors">
@@ -398,7 +404,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onOpenNewExpense }) 
 
             {/* Mobile Cards */}
             <div className="md:hidden divide-y divide-slate-100">
-              {filteredExpenses.map((e) => {
+              {pagedExpenses.map((e) => {
                 const cat = getCategoryConfig(e.category);
                 return (
                   <div key={e.id} className="p-4 space-y-2">
@@ -434,6 +440,18 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onOpenNewExpense }) 
                 );
               })}
             </div>
+
+            <Pagination
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalCount={filteredExpenses.length}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(sz) => {
+                setPageSize(sz);
+                setCurrentPage(1);
+              }}
+              isLoading={loading}
+            />
           </>
         )}
       </div>

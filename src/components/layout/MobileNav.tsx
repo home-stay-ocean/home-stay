@@ -11,6 +11,7 @@ import {
   BarChart3,
   BedDouble,
   Users2,
+  Award,
   History,
   X,
   LogOut,
@@ -43,6 +44,20 @@ export const MobileNav: React.FC<MobileNavProps> = ({
 
   const moreItems = [
     {
+      id: 'customers' as ActiveScreen,
+      label: 'Customer Profiles',
+      icon: Users2,
+      visible: true,
+      desc: 'Guest records & history',
+    },
+    {
+      id: 'referrals' as ActiveScreen,
+      label: 'Referrals & Commissions',
+      icon: Award,
+      visible: isOwnerOrAdmin,
+      desc: 'Partner payouts & reports',
+    },
+    {
       id: 'analytics' as ActiveScreen,
       label: 'Financial Analytics',
       icon: LineChart,
@@ -74,7 +89,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
       id: 'activity_log' as ActiveScreen,
       label: 'Audit Activity Log',
       icon: History,
-      visible: isOwnerOrAdmin,
+      visible: isSuperAdmin,
       desc: 'Triggered audit trail of changes',
     },
   ];

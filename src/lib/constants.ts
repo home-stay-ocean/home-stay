@@ -1,12 +1,16 @@
-import { UserRole, BookingStatus, ExpenseCategory, BookingSource, PaymentMethod } from '../types';
+import { UserRole, BookingStatus, ExpenseCategory, BookingSource, PaymentMethod, CommissionStatus, CheckoutMethod } from '../types';
 
-// Configurable currency symbol in ONE place
+// Configurable currency symbol - India INR (₹)
 export const CURRENCY_SYMBOL: string = import.meta.env.VITE_CURRENCY_SYMBOL || '₹';
 
-export function formatCurrency(amount: number | null | undefined): string {
+/**
+ * Format currency strictly in Indian numbering system: ₹1,00,000 or ₹1,00,000.50
+ */
+export function formatCurrency(amount: number | null | undefined, showDecimals: boolean = false): string {
   if (amount === null || amount === undefined || isNaN(amount)) return `${CURRENCY_SYMBOL}0`;
   return `${CURRENCY_SYMBOL}${Number(amount).toLocaleString('en-IN', {
-    maximumFractionDigits: 0,
+    minimumFractionDigits: showDecimals ? 2 : 0,
+    maximumFractionDigits: showDecimals ? 2 : 0,
   })}`;
 }
 
@@ -50,6 +54,50 @@ export const BOOKING_STATUS_CONFIG: Record<BookingStatus, { label: string; bg: s
     text: 'text-rose-700',
     border: 'border-rose-200',
     dot: 'bg-rose-400',
+  },
+};
+
+export const COMMISSION_STATUS_CONFIG: Record<CommissionStatus, { label: string; bg: string; text: string; border: string; dot: string }> = {
+  pending: {
+    label: 'Pending',
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+    border: 'border-amber-200',
+    dot: 'bg-amber-500',
+  },
+  approved: {
+    label: 'Approved',
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    border: 'border-blue-200',
+    dot: 'bg-blue-500',
+  },
+  paid: {
+    label: 'Paid',
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-700',
+    border: 'border-emerald-200',
+    dot: 'bg-emerald-500',
+  },
+  cancelled: {
+    label: 'Cancelled',
+    bg: 'bg-slate-100',
+    text: 'text-slate-600',
+    border: 'border-slate-200',
+    dot: 'bg-slate-400',
+  },
+};
+
+export const CHECKOUT_METHOD_CONFIG: Record<CheckoutMethod, { label: string; bg: string; text: string }> = {
+  manual: {
+    label: 'Manual Staff Checkout',
+    bg: 'bg-slate-100',
+    text: 'text-slate-700',
+  },
+  automatic: {
+    label: 'Auto System (12 PM IST)',
+    bg: 'bg-purple-50',
+    text: 'text-purple-700',
   },
 };
 

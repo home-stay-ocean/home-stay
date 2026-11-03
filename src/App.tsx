@@ -14,6 +14,8 @@ import { ExpensesPage } from './pages/ExpensesPage';
 import { SetupPage } from './pages/SetupPage';
 import { UsersPage } from './pages/UsersPage';
 import { ActivityLogPage } from './pages/ActivityLogPage';
+import { CustomersPage } from './pages/CustomersPage';
+import { ReferralsPage } from './pages/ReferralsPage';
 
 // Modals
 import { BookingModal } from './components/bookings/BookingModal';
@@ -142,12 +144,20 @@ function MainApp() {
           isOwnerOrAdmin ? <SetupPage /> : <DashboardPage onOpenNewBooking={handleOpenNewBooking} onOpenNewExpense={() => setIsExpenseModalOpen(true)} onSelectBooking={handleSelectBooking} />
         )}
 
+        {currentScreen === 'customers' && (
+          <CustomersPage onSelectBooking={handleSelectBooking} />
+        )}
+
+        {currentScreen === 'referrals' && (
+          isOwnerOrAdmin ? <ReferralsPage /> : <DashboardPage onOpenNewBooking={handleOpenNewBooking} onOpenNewExpense={() => setIsExpenseModalOpen(true)} onSelectBooking={handleSelectBooking} />
+        )}
+
         {currentScreen === 'users' && (
           isSuperAdmin ? <UsersPage /> : <DashboardPage onOpenNewBooking={handleOpenNewBooking} onOpenNewExpense={() => setIsExpenseModalOpen(true)} onSelectBooking={handleSelectBooking} />
         )}
 
         {currentScreen === 'activity_log' && (
-          isOwnerOrAdmin ? <ActivityLogPage /> : <DashboardPage onOpenNewBooking={handleOpenNewBooking} onOpenNewExpense={() => setIsExpenseModalOpen(true)} onSelectBooking={handleSelectBooking} />
+          isSuperAdmin ? <ActivityLogPage /> : <DashboardPage onOpenNewBooking={handleOpenNewBooking} onOpenNewExpense={() => setIsExpenseModalOpen(true)} onSelectBooking={handleSelectBooking} />
         )}
       </div>
 

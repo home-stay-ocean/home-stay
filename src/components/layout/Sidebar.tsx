@@ -10,6 +10,8 @@ import {
   Receipt,
   BedDouble,
   Users2,
+  Users,
+  Award,
   History,
   Home,
   Shield,
@@ -39,6 +41,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentScreen, onSelectScreen 
       label: 'Bookings',
       icon: CalendarCheck2,
       visible: true,
+    },
+    {
+      id: 'customers' as ActiveScreen,
+      label: 'Customers',
+      icon: Users,
+      visible: true,
+    },
+    {
+      id: 'referrals' as ActiveScreen,
+      label: 'Referral & Comm.',
+      icon: Award,
+      visible: isOwnerOrAdmin,
+      badge: 'Payouts',
     },
     {
       id: 'calendar' as ActiveScreen,
@@ -83,12 +98,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentScreen, onSelectScreen 
       visible: isSuperAdmin,
       badge: 'Admin',
     },
-    // Activity Log for Owner and Super Admin
+    // Activity Log - STRICTLY ADMIN ONLY (Hidden from Partners & Managers)
     {
       id: 'activity_log' as ActiveScreen,
       label: 'Audit Activity Log',
       icon: History,
-      visible: isOwnerOrAdmin,
+      visible: isSuperAdmin,
+      badge: 'Admin',
     },
   ];
 
@@ -103,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentScreen, onSelectScreen 
           <h1 className="font-extrabold text-base text-slate-900 tracking-tight leading-tight">
             Homestay Manager
           </h1>
-          <p className="text-[11px] font-medium text-slate-400">3 Properties • Operations</p>
+          <p className="text-[11px] font-medium text-slate-400">Operations & Bookings</p>
         </div>
       </div>
 
@@ -159,10 +175,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentScreen, onSelectScreen 
           </div>
           <div className="min-w-0">
             <p className="text-[11px] font-bold text-slate-700 truncate">
-              {role === 'super_admin' ? 'Super Admin Mode' : role === 'owner' ? 'Owner Mode' : 'Manager Mode'}
+              {role === 'super_admin' ? 'Super Admin Mode' : role === 'owner' ? 'Partner / Owner Mode' : 'Property Manager Mode'}
             </p>
             <p className="text-[10px] text-slate-400 truncate">
-              {role === 'manager' ? 'Restricted view (No finances)' : 'Full analytics & audit'}
+              {role === 'super_admin' ? 'Full audit logs & user controls' : role === 'owner' ? 'Portfolio & commission access' : 'Restricted operations view'}
             </p>
           </div>
         </div>
