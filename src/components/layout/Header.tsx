@@ -8,7 +8,6 @@ import {
   ChevronDown,
   LogOut,
   HelpCircle,
-  Database,
   Sparkles,
   ShieldCheck,
   UserCheck,
@@ -50,12 +49,6 @@ export const Header: React.FC<HeaderProps> = () => {
               )}
             </select>
           </div>
-
-          {/* Database Live Badge */}
-          <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-full">
-            <Database className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Supabase Cloud DB</span>
-          </span>
         </div>
 
         {/* Right: User Profile */}

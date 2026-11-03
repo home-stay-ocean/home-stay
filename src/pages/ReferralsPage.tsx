@@ -107,6 +107,7 @@ export const ReferralsPage: React.FC = () => {
       const res = await api.getBookingsPaged({
         page: commPage,
         pageSize: commPageSize,
+        has_referral: true,
         referral_person_id: selectedPersonFilter !== 'all' ? selectedPersonFilter : undefined,
         commission_status: commStatusFilter !== 'all' ? commStatusFilter : undefined,
         check_in_from: timeframe.startDate,
@@ -114,9 +115,7 @@ export const ReferralsPage: React.FC = () => {
         sort_by: 'newest',
       });
 
-      // Filter to only bookings with a referral person
-      const referredOnly = res.data.filter((b) => b.referral_person_id || b.manual_referral_name);
-      setCommBookings(referredOnly);
+      setCommBookings(res.data);
       setCommTotalCount(res.totalCount);
     } catch (err) {
       console.error('Failed to load commission bookings:', err);
@@ -354,7 +353,7 @@ export const ReferralsPage: React.FC = () => {
                 </label>
                 <select
                   value={selectedTimeframe}
-                  onChange={(e) => setSelectedTimeframe(e.target.value as TimeframePreset)}
+                  onChange={(e) => { setSelectedTimeframe(e.target.value as TimeframePreset); setCommPage(1); }}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold"
                 >
                   <option value="today">Today</option>
@@ -376,7 +375,7 @@ export const ReferralsPage: React.FC = () => {
                 </label>
                 <select
                   value={selectedPersonFilter}
-                  onChange={(e) => setSelectedPersonFilter(e.target.value)}
+                  onChange={(e) => { setSelectedPersonFilter(e.target.value); setCommPage(1); }}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold"
                 >
                   <option value="all">All Referral Persons</option>
@@ -395,7 +394,7 @@ export const ReferralsPage: React.FC = () => {
                 </label>
                 <select
                   value={commStatusFilter}
-                  onChange={(e) => setCommStatusFilter(e.target.value)}
+                  onChange={(e) => { setCommStatusFilter(e.target.value); setCommPage(1); }}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold"
                 >
                   <option value="all">All Statuses</option>
@@ -415,7 +414,7 @@ export const ReferralsPage: React.FC = () => {
                   <input
                     type="date"
                     value={customStart}
-                    onChange={(e) => setCustomStart(e.target.value)}
+                    onChange={(e) => { setCustomStart(e.target.value); setCommPage(1); }}
                     className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg"
                   />
                 </div>
@@ -424,7 +423,7 @@ export const ReferralsPage: React.FC = () => {
                   <input
                     type="date"
                     value={customEnd}
-                    onChange={(e) => setCustomEnd(e.target.value)}
+                    onChange={(e) => { setCustomEnd(e.target.value); setCommPage(1); }}
                     className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg"
                   />
                 </div>

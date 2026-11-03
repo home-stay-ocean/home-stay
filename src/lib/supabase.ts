@@ -501,6 +501,7 @@ export const api = {
     is_ac?: boolean;
     referral_person_id?: string;
     direct_only?: boolean;
+    has_referral?: boolean;
     commission_status?: string;
     checkout_method?: string;
     check_in_from?: string;
@@ -544,9 +545,13 @@ export const api = {
     }
 
     // 4. Referral Filter
-    if (params?.direct_only) {
+    if (params?.has_referral) {
+      // Only bookings that have a referral person ID OR a non-empty manual referral name
+      query = query.or('referral_person_id.not.is.null,manual_referral_name.not.is.null');
+    } else if (params?.direct_only) {
       query = query.is('referral_person_id', null);
-    } else if (params?.referral_person_id && params.referral_person_id !== 'all') {
+    }
+    if (params?.referral_person_id && params.referral_person_id !== 'all') {
       query = query.eq('referral_person_id', params.referral_person_id);
     }
 

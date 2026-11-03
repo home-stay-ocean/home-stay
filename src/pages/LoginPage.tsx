@@ -86,14 +86,14 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
               <div>
                 <h3 className="text-lg font-bold text-slate-900">Forgot Password?</h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Enter your registered staff email and we will send you a password recovery link.
+                  Enter your registered email and we will send you a password recovery link.
                 </p>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                   <Mail className="w-3.5 h-3.5 text-brand-600" />
-                  Staff Email Address
+                  Email Address
                 </label>
                 <input
                   type="email"
@@ -128,7 +128,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                   <Mail className="w-3.5 h-3.5 text-brand-600" />
-                  Staff Email
+                  Email
                 </label>
                 <input
                   type="email"
@@ -169,13 +169,9 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
                 disabled={loading}
                 className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-brand-600/30 flex items-center justify-center gap-2 disabled:opacity-50 transition-all hover:scale-[1.01]"
               >
-                <span>{loading ? 'Authenticating...' : 'Sign In with Supabase'}</span>
+                <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
-
-              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-[11px] text-slate-500 text-center">
-                Strict database authentication. Direct connection to Supabase PostgreSQL.
-              </div>
             </form>
           )}
         </div>
